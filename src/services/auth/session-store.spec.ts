@@ -4,9 +4,10 @@
  * Writes to `data/config/sessions.json`; cleans up in beforeEach.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
-import { readFile, unlink, writeFile } from 'node:fs/promises'
-import { dataPath } from '@/core/paths.js'
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import {
   createSession,
   validateAndTouch,
@@ -17,7 +18,22 @@ import {
   _unlinkFile,
 } from './session-store.js'
 
-const SESSIONS_FILE = dataPath('config', 'sessions.json')
+// Redirect the store at a private temp file (via the OPENALICE_SESSIONS_FILE
+// seam) so this file never touches the real data/config/sessions.json and
+// can't race with other specs (e.g. auth.spec.ts) under parallel runs.
+let tmpDir: string
+let SESSIONS_FILE: string
+
+beforeAll(async () => {
+  tmpDir = await mkdtemp(join(tmpdir(), 'oa-session-store-'))
+  SESSIONS_FILE = join(tmpDir, 'sessions.json')
+  process.env['OPENALICE_SESSIONS_FILE'] = SESSIONS_FILE
+})
+
+afterAll(async () => {
+  delete process.env['OPENALICE_SESSIONS_FILE']
+  await rm(tmpDir, { recursive: true, force: true })
+})
 
 beforeEach(async () => {
   await _reset()

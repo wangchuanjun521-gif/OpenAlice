@@ -21,7 +21,13 @@ import { dataPath } from '@/core/paths.js'
 const SID_BYTES = 32
 const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000  // 7 days
 
-const SESSIONS_FILE = () => dataPath('config', 'sessions.json')
+// Resolved lazily on every call so the path can be redirected at runtime.
+// `OPENALICE_SESSIONS_FILE` is a test-only seam (same spirit as the
+// `_reset` / `_unlinkFile` exports below): specs point it at a private
+// temp file so parallel test files don't race on — or clobber — the real
+// `data/config/sessions.json`. Production never sets it.
+const SESSIONS_FILE = () =>
+  process.env['OPENALICE_SESSIONS_FILE'] || dataPath('config', 'sessions.json')
 
 export interface SessionRecord {
   sid: string

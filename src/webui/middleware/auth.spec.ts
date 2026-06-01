@@ -7,7 +7,10 @@
  * is fed via a mocked `c.env.incoming.socket.remoteAddress`.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest'
+import { mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { Hono } from 'hono'
 import {
   createAuthMiddleware,
@@ -19,6 +22,22 @@ import {
   revokeAllSessions,
   _reset,
 } from '@/services/auth/session-store.js'
+
+// These tests create real sessions through the store. Redirect it at a
+// private temp file (OPENALICE_SESSIONS_FILE seam) so we neither clobber the
+// operator's real data/config/sessions.json nor race session-store.spec.ts
+// over the shared file under parallel runs.
+let tmpDir: string
+
+beforeAll(async () => {
+  tmpDir = await mkdtemp(join(tmpdir(), 'oa-auth-mw-'))
+  process.env['OPENALICE_SESSIONS_FILE'] = join(tmpDir, 'sessions.json')
+})
+
+afterAll(async () => {
+  delete process.env['OPENALICE_SESSIONS_FILE']
+  await rm(tmpDir, { recursive: true, force: true })
+})
 
 function makeApp(opts: Parameters<typeof createAuthMiddleware>[0]) {
   const app = new Hono()
