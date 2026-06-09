@@ -1,7 +1,8 @@
 import { readFile, writeFile, mkdir } from 'fs/promises'
 import { dirname } from 'path'
-// AgentCenter retired — the in-process agent loop now runs inside the
-// native workspace CLIs; Alice drives GenerateRouter directly.
+// The in-process AI loop (AgentCenter, then GenerateRouter + AgentWork) is gone
+// as of 0.40 — the model loop runs inside the native workspace CLIs; autonomous
+// runs go through headless workspace dispatch (cron → workspace).
 import { loadConfig } from './core/config.js'
 import { dataPath, defaultPath } from '@/core/paths.js'
 import type { Plugin, EngineContext } from './core/types.js'

@@ -9,25 +9,18 @@
  * Adding a migration: import it here and append. The
  * `pnpm build:migration-index` script regenerates
  * `src/migrations/INDEX.md` from this list at build time.
+ *
+ * NOTE: migrations 0001–0007 were retired at the 0.40 baseline — the World-B
+ * deletion + Workspace pivot turned the pre-0.40 data shapes over completely, so
+ * pre-0.40 installs rebuild `data/` rather than migrate. The framework stays for
+ * future upgrades. Numbering continues FORWARD from the highest id ever shipped
+ * (next: 0009) — never reuse a retired id, since existing installs' journals
+ * recorded the old ones.
  */
 
 import type { Migration } from './types.js'
-import { migration as migration_0001_initial_unified } from './0001_initial_unified/index.js'
-import { migration as migration_0002_extract_credentials } from './0002_extract_credentials/index.js'
-import { migration as migration_0003_backfill_credentials } from './0003_backfill_credentials/index.js'
-import { migration as migration_0004_prune_internal_cron_jobs } from './0004_prune_internal_cron_jobs/index.js'
-import { migration as migration_0005_extract_mcp_from_connectors } from './0005_extract_mcp_from_connectors/index.js'
-import { migration as migration_0006_retire_brain } from './0006_retire_brain/index.js'
-import { migration as migration_0007_retire_legacy_chat } from './0007_retire_legacy_chat/index.js'
 import { migration as migration_0008_disable_targetless_cron_jobs } from './0008_disable_targetless_cron_jobs/index.js'
 
 export const REGISTRY: Migration[] = [
-  migration_0001_initial_unified,
-  migration_0002_extract_credentials,
-  migration_0003_backfill_credentials,
-  migration_0004_prune_internal_cron_jobs,
-  migration_0005_extract_mcp_from_connectors,
-  migration_0006_retire_brain,
-  migration_0007_retire_legacy_chat,
   migration_0008_disable_targetless_cron_jobs,
 ]
