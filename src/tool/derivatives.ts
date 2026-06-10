@@ -29,5 +29,18 @@ strikes, positioning around events.`,
         return await derivativesClient.getOptionsChains({ symbol, provider: 'deribit' })
       },
     }),
+
+    cryptoFuturesInstruments: tool({
+      description: `List all Deribit futures instruments (keyless).
+
+Returns every listed future/perpetual: instrument id, symbol
+(e.g. BTC-PERPETUAL, BTC-26JUN26), base/counter currency, contract size,
+expiration. Use to discover what's tradeable before reading the curve or
+a specific contract.`,
+      inputSchema: z.object({}).meta({ examples: [{}] }),
+      execute: async () => {
+        return await derivativesClient.getFuturesInstruments({ provider: 'deribit' })
+      },
+    }),
   }
 }

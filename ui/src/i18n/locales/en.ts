@@ -187,6 +187,7 @@ export const en = {
     macroM2: 'M2 Money Supply',
     macroSentiment: 'Consumer Sentiment (UMich)',
     macroBreakeven: '10Y Breakeven Inflation',
+    macroSloos: 'Banks Tightening C&I (SLOOS)',
     boardTermStructure: 'Term Structure',
     termSubtitle: 'BTC / ETH futures curve with annualized basis vs the perpetual.',
     termSpotPerp: 'Perp',

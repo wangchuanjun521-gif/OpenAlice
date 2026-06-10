@@ -31,7 +31,8 @@ export class OECDHousePriceIndexFetcher extends Fetcher {
     const cc = resolveCountryCode(query.country)
     const freq = FREQ_MAP[query.frequency] ?? 'Q'
     const rows = await fetchOecdCsv(
-      'OECD.SDD.TPS,DSD_AN_HOUSE_PRICES@DF_HOUSE_PRICES,1.0',
+      // Agency moved in the 2025/26 SDMX reshuffle (was OECD.SDD.TPS, versioned).
+      'OECD.ECO.MPD,DSD_AN_HOUSE_PRICES@DF_HOUSE_PRICES',
       `${cc}.${freq}.RHP._T.IX.`,
     )
 

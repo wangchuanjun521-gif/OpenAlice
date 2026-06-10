@@ -97,6 +97,16 @@ export class YFinanceShareStatisticsFetcher extends Fetcher {
         d.sharesShortPreviousMonthDate = new Date(d.sharesShortPreviousMonthDate * 1000).toISOString().slice(0, 10)
       }
 
+      // yahoo-finance2 BUG: its schema marks sharesShortPriorMonth (a share
+      // COUNT) as a date, so 134,866,074 shares parses as epoch seconds →
+      // "Apr 1974". Recover the count by inverting the bogus conversion.
+      if (d.sharesShortPriorMonth instanceof Date) {
+        d.sharesShortPriorMonth = Math.round(d.sharesShortPriorMonth.getTime() / 1000)
+      } else if (typeof d.sharesShortPriorMonth === 'string') {
+        const ms = Date.parse(d.sharesShortPriorMonth)
+        if (!Number.isNaN(ms)) d.sharesShortPriorMonth = Math.round(ms / 1000)
+      }
+
       // yahoo-finance2 uses insidersPercentHeld / institutionsPercentHeld
       // while yfinance Python uses heldPercentInsiders / heldPercentInstitutions
       // Map yahoo-finance2 names to the alias dict expected names
@@ -108,6 +118,14 @@ export class YFinanceShareStatisticsFetcher extends Fetcher {
       }
 
       const aliased = applyAliases(d, ALIAS_DICT)
+      // Yahoo intermittently serialises large counts (e.g. sharesShortPriorMonth)
+      // as strings — coerce numeric-looking strings before the strict parse.
+      for (const [k, v] of Object.entries(aliased)) {
+        if (k.endsWith('_date') || k === 'date' || k === 'symbol') continue
+        if (typeof v === 'string' && v !== '' && Number.isFinite(Number(v))) {
+          aliased[k] = Number(v)
+        }
+      }
       return YFinanceShareStatisticsDataSchema.parse(aliased)
     })
   }

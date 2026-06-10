@@ -11,7 +11,7 @@ import type {
   EquitySearchData, EquityHistoricalData, EquityInfoData, KeyMetricsData,
   IncomeStatementData, BalanceSheetData, CashFlowStatementData, FinancialRatiosData,
   PriceTargetConsensusData, CalendarEarningsData, CalendarIpoData, CalendarDividendData,
-  InsiderTradingData, EquityDiscoveryData,
+  InsiderTradingData, EquityDiscoveryData, ShareStatisticsData,
 } from '@traderalice/opentypebb'
 
 export class OpenBBEquityClient {
@@ -276,7 +276,7 @@ export class OpenBBEquityClient {
   }
 
   async getShareStatistics(params: Record<string, unknown>) {
-    return this.request('/ownership/share_statistics', params)
+    return this.request<ShareStatisticsData>('/ownership/share_statistics', params)
   }
 
   async getForm13F(params: Record<string, unknown>) {

@@ -337,5 +337,89 @@ get ALL of them (use a short date range in that case).`,
         return await economyClient.getChokepointVolume(params)
       },
     }),
+
+    economyCountryRetail: tool({
+      description: `Get a country's retail price index (OECD, keyless).
+
+Monthly observations of the retail price level — a demand-side read that
+complements CPI. Same country coverage as economyCountryCpi (snake_case
+names like "united_states", "japan").`,
+      inputSchema: z.object({
+        country: z.string().describe('Country slug, e.g. "united_states"'),
+        start_date: z.string().optional().describe('Start date YYYY-MM-DD (optional)'),
+      }).meta({ examples: [{ country: 'united_states' }] }),
+      execute: async ({ country, start_date }) => {
+        const params: Record<string, unknown> = { country, provider: OECD_PROVIDER }
+        if (start_date !== undefined) params.start_date = start_date
+        return await economyClient.getRetailPrices(params)
+      },
+    }),
+
+    economyEuroAreaBop: tool({
+      description: `Get the euro-area balance of payments from the ECB (keyless).
+
+Quarterly current account, goods, services, primary/secondary income —
+the external-position read on the euro area. Values in EUR millions.`,
+      inputSchema: z.object({
+        start_date: z.string().optional().describe('Start date YYYY-MM-DD (optional)'),
+      }).meta({ examples: [{}] }),
+      execute: async ({ start_date }) => {
+        const params: Record<string, unknown> = { provider: 'ecb' }
+        if (start_date !== undefined) params.start_date = start_date
+        return await economyClient.getBalanceOfPayments(params)
+      },
+    }),
+
+    economyFomcDocuments: tool({
+      description: `List FOMC document links — policy statements, meeting minutes and
+projection materials — scraped from the Federal Reserve calendar (keyless).
+
+Returns {date, title, type, url} sorted newest-first. Fetch the url with your
+web tools to read the actual statement/minutes text. Statements publish on
+meeting day; minutes ~3 weeks later.`,
+      inputSchema: z.object({
+        start_date: z.string().optional().describe('Earliest meeting date YYYY-MM-DD (optional)'),
+      }).meta({ examples: [{}] }),
+      execute: async ({ start_date }) => {
+        const params: Record<string, unknown> = { provider: FRED_PROVIDER }
+        if (start_date !== undefined) params.start_date = start_date
+        return await economyClient.getFomcDocuments(params)
+      },
+    }),
+
+    economyFedBalanceSheet: tool({
+      description: `Get the Fed's balance sheet holdings (H.4.1 via FRED).
+
+Weekly observations in USD millions: Treasuries held outright, MBS, agency
+debt, and total assets. The QT/QE read — total assets shrinking = balance
+sheet runoff. Requires a FRED key.`,
+      inputSchema: z.object({
+        date: z.string().optional().describe('Pin a specific week YYYY-MM-DD (optional; default recent history)'),
+      }).meta({ examples: [{}] }),
+      execute: async ({ date }) => {
+        const params: Record<string, unknown> = { provider: FRED_PROVIDER }
+        if (date !== undefined) params.date = date
+        return await economyClient.getCentralBankHoldings(params)
+      },
+    }),
+
+    economyDealerPositioning: tool({
+      description: `Get primary dealer net positions from the NY Fed (keyless).
+
+Weekly net positions in USD millions by asset class (treasury_total,
+mbs_total, corporate_total, abs_total, agency_total) plus the summed
+total_net_position. The dealer-balance-sheet read: heavy long Treasury
+positioning = constrained intermediation capacity.`,
+      inputSchema: z.object({
+        start_date: z.string().optional().describe('Start date YYYY-MM-DD (optional)'),
+        end_date: z.string().optional().describe('End date YYYY-MM-DD (optional)'),
+      }).meta({ examples: [{ start_date: '2025-01-01' }] }),
+      execute: async ({ start_date, end_date }) => {
+        const params: Record<string, unknown> = { provider: FRED_PROVIDER }
+        if (start_date !== undefined) params.start_date = start_date
+        if (end_date !== undefined) params.end_date = end_date
+        return await economyClient.getPrimaryDealerPositioning(params)
+      },
+    }),
   }
 }

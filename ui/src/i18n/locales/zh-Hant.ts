@@ -184,6 +184,7 @@ export const zhHant: Resources = {
     macroM2: 'M2 貨幣供給',
     macroSentiment: '密西根消費者信心',
     macroBreakeven: '10Y 損益兩平通膨',
+    macroSloos: '銀行信貸收緊(SLOOS)',
     boardTermStructure: '期限結構',
     termSubtitle: 'BTC / ETH 期貨曲線,標注對永續的年化基差。',
     termSpotPerp: '永續',

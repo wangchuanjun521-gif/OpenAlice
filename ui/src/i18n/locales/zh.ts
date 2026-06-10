@@ -176,6 +176,7 @@ export const zh: Resources = {
     macroM2: 'M2 货币供应',
     macroSentiment: '密歇根消费者信心',
     macroBreakeven: '10Y 盈亏平衡通胀',
+    macroSloos: '银行信贷收紧(SLOOS)',
     boardTermStructure: '期限结构',
     termSubtitle: 'BTC / ETH 期货曲线,标注对永续的年化基差。',
     termSpotPerp: '永续',

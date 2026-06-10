@@ -439,6 +439,7 @@ function macroLabel(card: MacroSeriesCard, t: ReturnType<typeof useTranslation>[
     case 'M2SL': return t('market.macroM2')
     case 'UMCSENT': return t('market.macroSentiment')
     case 'T10YIE': return t('market.macroBreakeven')
+    case 'DRTSCILM': return t('market.macroSloos')
     default: return card.label
   }
 }

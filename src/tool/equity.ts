@@ -138,6 +138,20 @@ If unsure about the symbol, use marketSearchForResearch to find it.`,
       },
     }),
 
+    equityGetShortInterest: tool({
+      description: `Get share statistics and short interest for a stock (Yahoo, keyless).
+
+Returns shares outstanding, float, shares short (current + prior month),
+short % of float, and days-to-cover. The squeeze/positioning read: rising
+short interest with high days-to-cover = crowded short.`,
+      inputSchema: z.object({
+        symbol: z.string().describe('Ticker symbol, e.g. "AAPL"'),
+      }).meta({ examples: [{ symbol: 'GME' }] }),
+      execute: async ({ symbol }) => {
+        return await equityClient.getShareStatistics({ symbol, provider: 'yfinance' })
+      },
+    }),
+
     equityGetEstimates: tool({
       description: `Get the analyst price-target consensus for a stock.
 

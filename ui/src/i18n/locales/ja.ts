@@ -176,6 +176,7 @@ export const ja: Resources = {
     macroM2: 'M2 マネーサプライ',
     macroSentiment: 'ミシガン消費者信頼感',
     macroBreakeven: '10年 BEI',
+    macroSloos: '銀行貸出基準厳格化(SLOOS)',
     boardTermStructure: '期間構造',
     termSubtitle: 'BTC / ETH 先物カーブ(対パーペチュアル年率ベーシス付き)。',
     termSpotPerp: 'Perp',

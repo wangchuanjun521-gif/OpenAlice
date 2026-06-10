@@ -7,7 +7,7 @@ import { z } from 'zod'
 import { Fetcher } from '../../../core/provider/abstract/fetcher.js'
 import { CentralBankHoldingsDataSchema } from '../../../standard-models/central-bank-holdings.js'
 import { EmptyDataError } from '../../../core/provider/utils/errors.js'
-import { amakeRequest } from '../../../core/provider/utils/helpers.js'
+import { fetchFredMultiSeries, getFredApiKey } from '../utils/fred-helpers.js'
 
 export const FedCentralBankHoldingsQueryParamsSchema = z.object({
   date: z.string().nullable().default(null).describe('Specific date for holdings data in YYYY-MM-DD.'),
@@ -24,9 +24,6 @@ export const FedCentralBankHoldingsDataSchema = CentralBankHoldingsDataSchema.ex
 
 export type FedCentralBankHoldingsData = z.infer<typeof FedCentralBankHoldingsDataSchema>
 
-// FRED series for Fed balance sheet
-const FRED_BASE = 'https://api.stlouisfed.org/fred/series/observations'
-
 export class FedCentralBankHoldingsFetcher extends Fetcher {
   static override requireCredentials = false
 
@@ -38,40 +35,33 @@ export class FedCentralBankHoldingsFetcher extends Fetcher {
     query: FedCentralBankHoldingsQueryParams,
     credentials: Record<string, string> | null,
   ): Promise<Record<string, unknown>[]> {
-    const fredKey = credentials?.fred_api_key ?? ''
-
-    // Fed H.4.1 data is available from FRED
-    // TREAST = Treasury securities held, MBST = MBS held, WSHOMCB = Total assets
-    const series = ['TREAST', 'MBST', 'WSHOMCB']
-    const dateParam = query.date ? `&observation_start=${query.date}&observation_end=${query.date}` : ''
-    const apiKeyParam = fredKey ? `&api_key=${fredKey}` : ''
-
-    const dataMap: Record<string, Record<string, number>> = {}
-
-    for (const seriesId of series) {
-      try {
-        const url = `${FRED_BASE}?series_id=${seriesId}&file_type=json&sort_order=desc&limit=100${dateParam}${apiKeyParam}`
-        const data = await amakeRequest<Record<string, unknown>>(url)
-        const observations = (data.observations ?? []) as Array<{ date: string; value: string }>
-
-        for (const obs of observations) {
-          const val = parseFloat(obs.value)
-          if (!isNaN(val)) {
-            if (!dataMap[obs.date]) dataMap[obs.date] = {}
-            dataMap[obs.date][seriesId] = val
-          }
-        }
-      } catch {
-        // Skip series that fail
-      }
+    // H.4.1 weekly balance-sheet series on FRED:
+    //   TREAST  = Treasury securities held outright
+    //   WSHOMCB = MBS held outright
+    //   WSHOFADSL = Federal agency debt securities
+    //   WALCL   = Total assets
+    // (The original port used a nonexistent 'MBST' id, mislabeled WSHOMCB
+    // as total assets, and read the wrong credential key — three reasons
+    // it always returned "no data".)
+    const apiKey = getFredApiKey(credentials)
+    if (!apiKey) {
+      throw new Error('FRED API key required — set the fred provider key in Settings → Market Data (free at fred.stlouisfed.org).')
     }
+    const dataMap = await fetchFredMultiSeries(['TREAST', 'WSHOMCB', 'WSHOFADSL', 'WALCL'], apiKey, {
+      startDate: query.date ?? undefined,
+      endDate: query.date ?? undefined,
+      limit: query.date ? undefined : 120, // ~2 years weekly when no date pinned
+    })
 
-    const results = Object.entries(dataMap).map(([date, values]) => ({
-      date,
-      treasury_holding_value: values.TREAST ?? null,
-      mbs_holding_value: values.MBST ?? null,
-      total_assets: values.WSHOMCB ?? null,
-    }))
+    const results = Object.entries(dataMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, values]) => ({
+        date,
+        treasury_holding_value: values.TREAST ?? null,
+        mbs_holding_value: values.WSHOMCB ?? null,
+        agency_holding_value: values.WSHOFADSL ?? null,
+        total_assets: values.WALCL ?? null,
+      }))
 
     if (results.length === 0) throw new EmptyDataError('No Fed holdings data found.')
     return results

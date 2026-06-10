@@ -37,6 +37,9 @@ const CURATED: CuratedSeries[] = [
   { id: 'M2SL', label: 'M2 Money Supply', unit: 'count', scale: 1e9 },
   { id: 'UMCSENT', label: 'Consumer Sentiment (UMich)', unit: 'index' },
   { id: 'T10YIE', label: '10Y Breakeven Inflation', unit: 'percent' },
+  // SLOOS: net % of banks tightening C&I lending standards (quarterly) —
+  // the credit-cycle read. Positive = tightening.
+  { id: 'DRTSCILM', label: 'Banks Tightening C&I (SLOOS)', unit: 'percent' },
 ]
 
 /** CPI index series — fetched alongside CURATED, surfaced as derived YoY. */
