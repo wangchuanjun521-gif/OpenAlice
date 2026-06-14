@@ -294,9 +294,13 @@ export class AlpacaBroker implements IBroker {
       if (!order.trailingPercent.equals(UNSET_DECIMAL)) alpacaOrder.trail_percent = order.trailingPercent.toFixed()
       if (order.outsideRth) alpacaOrder.extended_hours = true
 
-      // Bracket order (TPSL)
+      // Attached exit legs (TPSL). Alpaca's `bracket` class REQUIRES both
+      // take_profit AND stop_loss — a single leg under `bracket` is rejected
+      // 422 ("bracket orders require take_profit.limit_price"). When only one
+      // leg is present, `oto` (one-triggers-other) is the correct class, which
+      // accepts either leg alone. So: two legs → bracket, one leg → oto.
       if (tpsl?.takeProfit || tpsl?.stopLoss) {
-        alpacaOrder.order_class = 'bracket'
+        alpacaOrder.order_class = (tpsl.takeProfit && tpsl.stopLoss) ? 'bracket' : 'oto'
         if (tpsl.takeProfit) {
           alpacaOrder.take_profit = { limit_price: parseFloat(tpsl.takeProfit.price) }
         }
