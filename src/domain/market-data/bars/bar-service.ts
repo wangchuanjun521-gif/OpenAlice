@@ -132,6 +132,36 @@ function buildMeta(symbol: string, bars: OhlcvBar[], extra: Partial<BarMeta>): B
   }
 }
 
+/** Trading-day gap between two YYYY-MM-DD dates (Mon–Fri; holidays ignored, so
+ *  a holiday inflates the gap by ≤1 — acceptable for a staleness signal). */
+function tradingDaysBetween(fromISO: string, toISO: string): number {
+  const a = new Date(`${fromISO}T00:00:00Z`)
+  const b = new Date(`${toISO}T00:00:00Z`)
+  if (!(b.getTime() > a.getTime())) return 0
+  let days = 0
+  const d = new Date(a)
+  while (d.getTime() < b.getTime()) {
+    d.setUTCDate(d.getUTCDate() + 1)
+    const wd = d.getUTCDay()
+    if (wd !== 0 && wd !== 6) days++
+  }
+  return days
+}
+
+/** Freshness contract — did the data actually reach the requested point-in-time?
+ *  Anchor = explicit end/asOf, else today. The point is to make a delayed source
+ *  that silently stopped a day behind "now" LOUD, not to mask it as current. */
+function computeFreshness(
+  lastBarDate: string,
+  opts: GetBarsOpts,
+  now: () => Date,
+): Pick<BarMeta, 'asOf' | 'isLatestActual' | 'staleTradingDays'> {
+  if (!lastBarDate) return {}
+  const anchor = (opts.end ?? opts.asOf ?? now().toISOString().slice(0, 10)).slice(0, 10)
+  const gap = tradingDaysBetween(lastBarDate.slice(0, 10), anchor)
+  return { asOf: anchor, isLatestActual: gap === 0, staleTradingDays: gap }
+}
+
 /** Sort ascending, cap to MAX_BARS (keep most-recent), then truncate to `count`. */
 function finalize(data: OhlcvBar[], count?: number): OhlcvBar[] {
   data.sort((a, b) => a.date.localeCompare(b.date))
@@ -183,6 +213,7 @@ export function createBarService(deps: BarServiceDeps): BarService {
         barId: formatBarId(provider, symbol),
         provider,
         barCapability: VENDOR_CAPABILITY[provider],
+        ...computeFreshness(filtered[filtered.length - 1]?.date ?? '', opts, () => new Date()),
       }),
     }
   }
@@ -216,6 +247,7 @@ export function createBarService(deps: BarServiceDeps): BarService {
         sourceId,
         barId,
         barCapability: 'realtime',
+        ...computeFreshness(bars[bars.length - 1]?.date ?? '', opts, () => new Date()),
       }),
     }
   }

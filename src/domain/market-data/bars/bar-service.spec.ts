@@ -83,6 +83,16 @@ describe('getBars — vendor branch', () => {
     expect(bars.map((b) => b.date)).toEqual(['2024-01-02', '2024-01-03'])
   })
 
+  it('freshness contract: marks data stale when it does not reach the asOf anchor', async () => {
+    const svc = createBarService(makeDeps())
+    // RAW ends 2024-01-03. Anchor AT the last bar → current.
+    const cur = await svc.getBars({ symbol: 'AAPL', assetClass: 'equity' }, { interval: '1d', end: '2024-01-03' })
+    expect(cur.meta).toMatchObject({ asOf: '2024-01-03', isLatestActual: true, staleTradingDays: 0 })
+    // Anchor a week later (3 trading days past the last bar) → stale + LOUD.
+    const stale = await svc.getBars({ symbol: 'AAPL', assetClass: 'equity' }, { interval: '1d', end: '2024-01-08' })
+    expect(stale.meta).toMatchObject({ asOf: '2024-01-08', isLatestActual: false, staleTradingDays: 3 })
+  })
+
   it('caps at MAX_BARS', async () => {
     const big = Array.from({ length: 6000 }, (_, i) => ({
       date: `2000-01-01T${String(i).padStart(5, '0')}`, open: 1, high: 1, low: 1, close: 1, volume: 1,
